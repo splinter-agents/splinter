@@ -1,0 +1,64 @@
+---
+title: Step Limits
+description: Cap total LLM calls
+---
+
+# Step Limits
+
+Stop agents after N LLM calls.
+
+## Simple API
+
+```python
+from splinter import Splinter
+
+s = Splinter(
+    openai_key="sk-...",
+    max_steps=20,  # Stop at 20 LLM calls
+)
+
+result = await s.run("helper", "Do something")
+print(f"Steps used: {s.steps}")
+```
+
+## Advanced API
+
+```python
+from splinter import Gateway, ExecutionLimits
+
+gateway = Gateway(limits=ExecutionLimits(
+    max_steps=100,  # 100 calls max
+))
+
+# Check current steps
+metrics = gateway.get_metrics()
+print(f"Total steps: {metrics['total_steps']}")
+```
+
+## Per-Agent Limits
+
+```python
+from splinter import ExecutionLimits
+
+limits = ExecutionLimits(
+    max_steps=100,           # Workflow max
+    per_agent_max_steps=20,  # Each agent max
+)
+```
+
+## Error Handling
+
+```python
+from splinter.exceptions import StepLimitExceededError
+
+try:
+    result = await workflow.run()
+except StepLimitExceededError as e:
+    print(f"Step limit exceeded: {e.current} >= {e.limit}")
+```
+
+## Use Cases
+
+- **Prevent runaway agents**: Stop agents that keep calling LLM
+- **Cost control**: Limit calls to control costs
+- **Testing**: Limit steps during development

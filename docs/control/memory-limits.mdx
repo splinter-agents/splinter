@@ -1,0 +1,76 @@
+---
+title: Memory Limits
+description: Cap memory usage with TTL and eviction
+---
+
+# Memory Limits
+
+Prevent unbounded memory growth with size limits, TTL, and eviction policies.
+
+## Usage
+
+```python
+from splinter.control import MemoryStore
+from splinter.types import MemoryConfig, EvictionPolicy
+
+store = MemoryStore(config=MemoryConfig(
+    max_size_bytes=10 * 1024 * 1024,  # 10MB max
+    ttl_seconds=3600,                  # 1 hour TTL
+    eviction_policy=EvictionPolicy.LRU,
+    max_entries=1000,
+))
+
+# Store values
+store.set("key", {"data": "value"})
+store.set("key2", [1, 2, 3], agent_id="researcher")
+
+# Get values (returns None if expired)
+value = store.get("key")
+
+# Check stats
+stats = store.get_stats()
+print(f"Usage: {stats['usage_percent']:.1f}%")
+```
+
+## Eviction Policies
+
+| Policy | Description |
+|--------|-------------|
+| `FIFO` | First in, first out |
+| `LRU` | Least recently used |
+| `TTL` | Oldest by creation time |
+
+## Per-Agent Memory
+
+```python
+from splinter.control import AgentMemory
+
+# Create isolated namespace for each agent
+researcher_memory = AgentMemory(store, "researcher")
+writer_memory = AgentMemory(store, "writer")
+
+# Keys are namespaced
+researcher_memory.set("results", [...])  # Stored as "researcher:results"
+writer_memory.get("results")              # Returns None (different namespace)
+```
+
+## Callbacks
+
+```python
+store = MemoryStore(
+    config=config,
+    on_eviction=lambda key, value: print(f"Evicted: {key}"),
+    on_overflow=lambda current, limit: print(f"Warning: {current}/{limit}"),
+)
+```
+
+## Error Handling
+
+```python
+from splinter.exceptions import MemoryLimitError
+
+try:
+    store.set("huge_key", massive_data)
+except MemoryLimitError as e:
+    print(f"Too big: {e.current_size} > {e.max_size}")
+```

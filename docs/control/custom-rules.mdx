@@ -1,0 +1,115 @@
+---
+title: Custom Rules
+description: Define your own BLOCK/WARN rules
+---
+
+# Custom Rules
+
+Create custom rules that evaluate before each operation.
+
+## Usage
+
+```python
+from splinter.control import RulesEngine, Rule, RuleAction
+
+engine = RulesEngine()
+
+# Block when budget is low
+engine.add_rule(Rule(
+    rule_id="budget_guard",
+    name="Budget Guard",
+    description="Block when budget is low",
+    condition=lambda ctx: ctx.get("remaining_budget", 0) < 1.0,
+    action=RuleAction.BLOCK,
+    message="Budget too low for this operation",
+))
+
+# Evaluate rules
+engine.evaluate({"remaining_budget": 0.5})  # Raises RuleViolationError
+```
+
+## Rule Actions
+
+| Action | Description |
+|--------|-------------|
+| `BLOCK` | Block the operation |
+| `WARN` | Log warning, allow operation |
+| `LOG` | Just log, allow operation |
+
+## Rule Priority
+
+```python
+from splinter.control import RulePriority
+
+Rule(
+    rule_id="critical_check",
+    priority=RulePriority.CRITICAL,  # Evaluated first
+    ...
+)
+```
+
+| Priority | Value |
+|----------|-------|
+| `CRITICAL` | 100 |
+| `HIGH` | 75 |
+| `MEDIUM` | 50 |
+| `LOW` | 25 |
+
+## Built-in Rules
+
+```python
+from splinter.control.rules import (
+    budget_rule,
+    step_limit_rule,
+    agent_blocked_rule,
+    tool_blocked_rule,
+    pattern_rule,
+)
+
+# Budget threshold
+engine.add_rule(budget_rule(threshold=1.0, action=RuleAction.BLOCK))
+
+# Block specific agent
+engine.add_rule(agent_blocked_rule("bad_agent"))
+
+# Block specific tool
+engine.add_rule(tool_blocked_rule("dangerous_tool"))
+
+# Pattern matching
+engine.add_rule(pattern_rule(
+    pattern=r"password|secret",
+    field="user_input",
+    action=RuleAction.BLOCK,
+))
+```
+
+## Enable/Disable
+
+```python
+engine.disable_rule("budget_guard")
+engine.enable_rule("budget_guard")
+```
+
+## Match History
+
+```python
+# Get all matches
+matches = engine.get_matches()
+
+# Filter by rule
+matches = engine.get_matches(rule_id="budget_guard")
+
+# Filter by action
+matches = engine.get_matches(action=RuleAction.BLOCK)
+```
+
+## Error Handling
+
+```python
+from splinter.control.rules import RuleViolationError
+
+try:
+    engine.evaluate(context)
+except RuleViolationError as e:
+    print(f"Rule '{e.rule_name}' violated: {e.message}")
+```

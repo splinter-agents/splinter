@@ -1,0 +1,102 @@
+---
+title: Action Eligibility
+description: Define which agent can act at any moment
+---
+
+# Action Eligibility
+
+Control which agents are allowed to act at any given time.
+
+## Usage
+
+```python
+from splinter.coordination import ActionEligibility
+
+eligibility = ActionEligibility()
+
+# Only researcher can act
+eligibility.set_eligible("researcher")
+
+# Check before acting
+eligibility.check("researcher")  # OK
+eligibility.check("writer")       # Raises AgentNotEligibleError
+```
+
+## Multiple Eligible
+
+```python
+# Multiple agents can act
+eligibility.set_eligible("researcher", "analyzer")
+
+eligibility.check("researcher")  # OK
+eligibility.check("analyzer")     # OK
+eligibility.check("writer")       # Error
+```
+
+## Transfer Control
+
+```python
+# Transfer eligibility from one agent to another
+eligibility.transfer("researcher", "writer")
+
+eligibility.check("researcher")  # Now fails
+eligibility.check("writer")       # Now OK
+```
+
+## Add/Remove
+
+```python
+# Add agent to eligible set
+eligibility.add_eligible("helper")
+
+# Remove from eligible set
+eligibility.remove_eligible("helper")
+```
+
+## Block Agents
+
+```python
+# Explicitly block an agent
+eligibility.block("bad_agent")
+
+# Unblock
+eligibility.unblock("bad_agent")
+```
+
+## Query
+
+```python
+# Check without throwing
+if eligibility.is_eligible("researcher"):
+    await researcher.run()
+
+# Get all eligible agents
+eligible = eligibility.get_eligible_agents()
+```
+
+## Clear Rules
+
+```python
+# Clear all rules (all agents become eligible)
+eligibility.clear()
+```
+
+## Error Handling
+
+```python
+from splinter.coordination.execution import AgentNotEligibleError
+
+try:
+    eligibility.check("writer")
+except AgentNotEligibleError as e:
+    print(f"Agent '{e.agent_id}' cannot act: {e.reason}")
+```
+
+## Callbacks
+
+```python
+def on_change(old_agent, new_agent):
+    print(f"Control transferred: {old_agent} -> {new_agent}")
+
+eligibility = ActionEligibility(on_eligibility_change=on_change)
+```

@@ -1,0 +1,153 @@
+---
+title: Multi-Agent Pipelines
+description: Orchestrate multiple agents
+---
+
+## Basic Pipeline
+
+```python
+from splinter import Gateway, Workflow, AgentConfig, LLMProvider, ExecutionLimits
+
+# 1. Create gateway
+gateway = Gateway(limits=ExecutionLimits(max_budget=5.0))
+gateway.configure_provider("openai", api_key="sk-...")
+
+# 2. Create workflow
+workflow = Workflow(workflow_id="research-pipeline")
+workflow._gateway = gateway
+
+# 3. Add agents
+workflow.add_agent(AgentConfig(
+    agent_id="researcher",
+    provider=LLMProvider.OPENAI,
+    model="gpt-4o-mini",
+    system_prompt="Research the topic.",
+))
+
+workflow.add_agent(AgentConfig(
+    agent_id="writer",
+    provider=LLMProvider.OPENAI,
+    model="gpt-4o-mini",
+    system_prompt="Write based on research.",
+))
+
+# 4. Define steps
+workflow.add_step("researcher")
+workflow.add_step("writer", depends_on=["researcher"])
+
+# 5. Run
+result = await workflow.run(initial_state={"topic": "AI trends"})
+```
+
+## Dependencies
+
+### Sequential
+
+```python
+workflow.add_step("researcher")
+workflow.add_step("analyst", depends_on=["researcher"])
+workflow.add_step("writer", depends_on=["analyst"])
+```
+
+```
+researcher → analyst → writer
+```
+
+### Parallel
+
+```python
+workflow.add_step("researcher_a")
+workflow.add_step("researcher_b")
+workflow.add_step("synthesizer", depends_on=["researcher_a", "researcher_b"])
+```
+
+```
+researcher_a ─┐
+              ├→ synthesizer
+researcher_b ─┘
+```
+
+## State Ownership
+
+Prevent agents from overwriting each other.
+
+```python
+workflow.add_agent(AgentConfig(
+    agent_id="researcher",
+    state_ownership=["research.*"],
+    ...
+))
+
+workflow.add_agent(AgentConfig(
+    agent_id="writer",
+    state_ownership=["content.*"],
+    ...
+))
+```
+
+## Schema Validation
+
+Validate handoffs between agents.
+
+```python
+workflow.add_handoff_schema(
+    source="researcher",
+    target="writer",
+    schema={
+        "type": "object",
+        "properties": {
+            "findings": {"type": "array"},
+        },
+        "required": ["findings"],
+    },
+)
+```
+
+## Checkpointing
+
+Enable resume on failure.
+
+```python
+workflow = Workflow(
+    workflow_id="my-pipeline",
+    checkpoint_enabled=True,
+)
+
+# If it fails, resume:
+result = await workflow.run(resume=True)
+```
+
+## Mixed Providers
+
+Use different LLMs for different agents.
+
+```python
+gateway.configure_provider("openai", api_key="sk-...")
+gateway.configure_provider("anthropic", api_key="sk-ant-...")
+
+workflow.add_agent(AgentConfig(
+    agent_id="researcher",
+    provider=LLMProvider.OPENAI,
+    model="gpt-4o-mini",
+))
+
+workflow.add_agent(AgentConfig(
+    agent_id="writer",
+    provider=LLMProvider.ANTHROPIC,
+    model="claude-3-sonnet-20240229",
+))
+```
+
+## Result
+
+```python
+result = await workflow.run(initial_state={"topic": "AI"})
+
+print(f"Status: {result.status}")
+print(f"Success: {result.success}")
+print(f"Cost: ${result.metrics['total_cost']:.4f}")
+print(f"Steps: {result.metrics['total_steps']}")
+
+for agent_id, output in result.outputs.items():
+    print(f"{agent_id}: {output['result']}")
+```

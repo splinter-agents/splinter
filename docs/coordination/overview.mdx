@@ -1,0 +1,88 @@
+---
+title: Coordination Layer
+description: Make multiple agents work together without stepping on each other
+---
+
+# Coordination Layer
+
+The Coordination Layer makes agents behave like a system, not independent scripts.
+
+## Why Coordination?
+
+Without coordination, agents will:
+- Overwrite each other's work
+- Lose progress on failures
+- Pass invalid data between steps
+- Not know what other agents are doing
+
+## Features
+
+| Feature | What it does |
+|---------|--------------|
+| [Shared State](/coordination/shared-state) | Single source of truth |
+| [State Ownership](/coordination/state-ownership) | Who can write what |
+| [Checkpointing](/coordination/checkpointing) | Save/resume progress |
+| [Schema Validation](/coordination/schema-validation) | Validate outputs |
+| [Chain Awareness](/coordination/chain-awareness) | Agents know history |
+| [Goal Tracking](/coordination/goal-tracking) | Track progress |
+| [Action Eligibility](/coordination/action-eligibility) | Who can act when |
+| [Completion Signals](/coordination/completion-signals) | Explicit done |
+| [Wait Tracking](/coordination/wait-tracking) | Why is agent idle? |
+
+## Quick Example
+
+```python
+from splinter.coordination import (
+    SharedState,
+    StateOwnershipManager,
+    CheckpointManager,
+    ChainContext,
+    GoalTracker,
+)
+
+# Shared state
+state = SharedState(initial_data={"topic": "AI"})
+
+# Ownership rules
+ownership = StateOwnershipManager()
+ownership.register_ownership("researcher", ["research.*"])
+ownership.register_ownership("writer", ["content.*"])
+
+# Checkpointing
+checkpoints = CheckpointManager()
+
+# Chain awareness
+context = ChainContext(workflow_id="wf-123")
+context.register_agent("researcher", role="Research topics")
+context.register_agent("writer", role="Write content")
+
+# Goal tracking
+goals = GoalTracker()
+goals.set_goal(Goal(
+    goal_id="main",
+    description="Write a blog post",
+    success_criteria=["Research", "Draft", "Review"],
+))
+```
+
+## The Flow
+
+```
+Agent A completes
+    │
+    ▼
+├─ Update shared state (with ownership check)
+├─ Validate output schema
+├─ Create checkpoint
+├─ Update goal progress
+├─ Signal completion
+    │
+    ▼
+Agent B starts
+    │
+    ▼
+├─ Check eligibility
+├─ Get chain context (history, other agents)
+├─ Read shared state
+├─ Execute...
+```

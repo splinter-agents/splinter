@@ -1,0 +1,104 @@
+---
+title: Circuit Breakers
+description: Global safety triggers that halt execution
+---
+
+# Circuit Breakers
+
+Stop all operations when failures exceed a threshold.
+
+## How It Works
+
+```
+CLOSED → (failures exceed threshold) → OPEN → (timeout) → HALF_OPEN → (success) → CLOSED
+                                                              ↓
+                                                        (failure) → OPEN
+```
+
+## Usage
+
+```python
+from splinter.control import CircuitBreaker, CircuitBreakerConfig
+
+breaker = CircuitBreaker(
+    breaker_id="llm_api",
+    config=CircuitBreakerConfig(
+        failure_threshold=5,     # Open after 5 failures
+        success_threshold=2,     # Close after 2 successes in half-open
+        timeout_seconds=60,      # Wait 60s before trying half-open
+    )
+)
+
+# Use with API calls
+breaker.check()  # Raises CircuitOpenError if open
+
+try:
+    result = await make_api_call()
+    breaker.record_success()
+except Exception:
+    breaker.record_failure()
+    raise
+```
+
+## Error Rate Threshold
+
+```python
+config = CircuitBreakerConfig(
+    failure_threshold=5,
+    error_rate_threshold=0.5,  # Open if 50% of calls fail
+    min_calls_for_rate=10,     # After at least 10 calls
+)
+```
+
+## Circuit States
+
+| State | Description |
+|-------|-------------|
+| `CLOSED` | Normal operation |
+| `OPEN` | Blocking all calls |
+| `HALF_OPEN` | Testing if service recovered |
+
+## Registry
+
+```python
+from splinter.control import CircuitBreakerRegistry
+
+registry = CircuitBreakerRegistry()
+
+# Register multiple breakers
+registry.register("llm_api", config=CircuitBreakerConfig(failure_threshold=5))
+registry.register("database", config=CircuitBreakerConfig(failure_threshold=3))
+
+# Check all breakers
+registry.check_all()  # Raises if any are open
+
+# Emergency stop
+registry.trip_all("Emergency shutdown")
+
+# Get status
+open_breakers = registry.get_open_breakers()
+```
+
+## Error Handling
+
+```python
+from splinter.control.circuit_breaker import CircuitOpenError
+
+try:
+    breaker.check()
+except CircuitOpenError as e:
+    print(f"Circuit '{e.breaker_id}' is open: {e.reason}")
+```
+
+## Callbacks
+
+```python
+def on_trip(breaker_id: str, reason: str):
+    print(f"ALERT: {breaker_id} tripped - {reason}")
+
+breaker = CircuitBreaker(
+    breaker_id="llm_api",
+    config=config,
+    on_trip=on_trip,
+)
+```

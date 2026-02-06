@@ -1,0 +1,101 @@
+---
+title: Chain Awareness
+description: Agents know about other agents and execution history
+---
+
+# Chain Awareness
+
+Give agents visibility into the chain: who else is running, what happened before.
+
+## Usage
+
+```python
+from splinter.coordination import ChainContext
+
+context = ChainContext(workflow_id="wf-123")
+
+# Register agents
+context.register_agent(
+    agent_id="researcher",
+    role="Research topics",
+    description="Finds and summarizes information",
+    capabilities=["web_search", "summarize"],
+)
+
+context.register_agent(
+    agent_id="writer",
+    role="Write content",
+    capabilities=["write", "edit"],
+)
+```
+
+## Execution Tracking
+
+```python
+# Record execution start
+context.start_execution("researcher", step=0, input_summary="Research AI trends")
+
+# Record completion
+context.complete_execution(
+    agent_id="researcher",
+    step=0,
+    success=True,
+    output_summary="Found 5 relevant articles",
+)
+```
+
+## Get Context for Agent
+
+```python
+# Get full context for an agent
+agent_context = context.get_context_for_agent("writer")
+
+print(agent_context)
+# {
+#     "workflow_id": "wf-123",
+#     "current_agent": "writer",
+#     "all_agents": [...],
+#     "other_agents": [{"agent_id": "researcher", "role": "..."}],
+#     "execution_history": [
+#         {"agent_id": "researcher", "step": 0, "success": True, ...}
+#     ],
+#     "currently_executing": [],
+# }
+```
+
+## Query History
+
+```python
+# Get execution history
+history = context.get_execution_history()
+
+# Filter by agent
+researcher_history = context.get_execution_history(agent_id="researcher")
+
+# Get last execution
+last = context.get_last_execution()
+```
+
+## Check Status
+
+```python
+# Is agent currently running?
+is_running = context.is_agent_executing("researcher")
+
+# Get other agents
+other_agents = context.get_other_agents("writer")
+for agent in other_agents:
+    print(f"{agent['agent_id']}: {agent['role']}")
+```
+
+## Callbacks
+
+```python
+def on_complete(record):
+    print(f"{record.agent_id} completed step {record.step}")
+
+context = ChainContext(
+    workflow_id="wf-123",
+    on_execution_complete=on_complete,
+)
+```

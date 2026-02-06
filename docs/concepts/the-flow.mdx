@@ -1,0 +1,132 @@
+---
+title: The Flow
+description: How every LLM call flows through Splinter
+---
+
+## The Core Flow
+
+Every LLM call in Splinter follows this exact path:
+
+```
+Agent calls gateway.call()
+        │
+        ▼
+┌───────────────────────────────────────────┐
+│              GATEWAY                       │
+│                                           │
+│  1. CONTROL checks                        │
+│     • Budget OK?                          │
+│     • Steps OK?                           │
+│     • Time OK?                            │
+│     • Tool access OK?                     │
+│     • Loop detected?                      │
+│                                           │
+│  2. Route to LLM                          │
+│     • OpenAI / Anthropic / Gemini         │
+│     • Get response                        │
+│     • Track cost                          │
+│                                           │
+│  3. COORDINATION                          │
+│     • Update shared state                 │
+│     • Checkpoint for resume               │
+│                                           │
+└───────────────────────────────────────────┘
+        │
+        ▼
+   Return response → Next agent
+```
+
+## Step by Step
+
+### 1. Agent Calls Gateway
+
+```python
+# Agent.run() internally calls:
+response = await gateway.call(
+    agent_id="researcher",
+    provider=LLMProvider.OPENAI,
+    model="gpt-4o-mini",
+    messages=[...],
+    state=shared_state,
+)
+```
+
+### 2. Control Checks
+
+Gateway asks the Control Layer:
+
+```python
+# Internal to Gateway
+self._control.check_before_call(agent_id, tools)
+```
+
+This checks:
+- **Budget**: Have we exceeded `max_budget`?
+- **Steps**: Have we exceeded `max_steps`?
+- **Time**: Have we exceeded `max_time_seconds`?
+- **Tools**: Is this agent allowed to use these tools?
+- **Loops**: Is the agent stuck in a loop?
+
+<Warning>
+If any check fails, an exception is raised and the call is blocked.
+</Warning>
+
+### 3. Route to LLM
+
+If Control says OK, Gateway routes to the provider:
+
+```python
+# Internal to Gateway
+provider = self.get_provider("openai")
+response = await provider.complete(request)
+```
+
+### 4. Record Metrics
+
+After the call, Gateway records:
+
+```python
+# Internal to Gateway
+self._control.record_call(response, agent_id, state)
+```
+
+This tracks:
+- Cost (tokens × price)
+- Token usage
+- Latency
+- Call history
+
+### 5. Coordination
+
+Gateway updates coordination:
+
+```python
+# Internal to Gateway
+self._coordination.checkpoint(
+    workflow_id=workflow_id,
+    step=step,
+    agent_id=agent_id,
+    state=state,
+)
+```
+
+### 6. Return Response
+
+The response flows back to the agent, which parses it and continues.
+
+## Why This Matters
+
+<CardGroup cols={2}>
+  <Card title="Safety">
+    Every call is checked. No agent can exceed limits.
+  </Card>
+  <Card title="Observability">
+    Every call is tracked. You know exactly what happened.
+  </Card>
+  <Card title="Resumability">
+    Every step is checkpointed. Failed runs can resume.
+  </Card>
+  <Card title="Coordination">
+    State is shared. Agents work together, not against each other.
+  </Card>
+</CardGroup>

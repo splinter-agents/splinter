@@ -1,0 +1,159 @@
+---
+title: Control Layer
+description: Safety guardrails for agents
+---
+
+## What is Control Layer?
+
+Control Layer enforces safety limits on agents. It prevents:
+
+- Budget overruns
+- Infinite loops
+- Unauthorized tool access
+- Memory bloat
+
+<Note>
+Control Layer is integrated into Gateway. You configure it when creating Gateway.
+</Note>
+
+## Execution Limits
+
+### Budget Limits
+
+Stop agents when they spend too much.
+
+```python
+gateway = Gateway(
+    limits=ExecutionLimits(max_budget=10.0)  # Stop at $10
+)
+```
+
+When exceeded, raises `BudgetExceededError`.
+
+### Step Limits
+
+Stop agents after N LLM calls.
+
+```python
+gateway = Gateway(
+    limits=ExecutionLimits(max_steps=100)  # Stop at 100 calls
+)
+```
+
+When exceeded, raises `StepLimitExceededError`.
+
+### Time Limits
+
+Stop agents after N seconds.
+
+```python
+gateway = Gateway(
+    limits=ExecutionLimits(max_time_seconds=300)  # Stop at 5 minutes
+)
+```
+
+When exceeded, raises `TimeLimitExceededError`.
+
+### Combining Limits
+
+```python
+gateway = Gateway(
+    limits=ExecutionLimits(
+        max_budget=10.0,
+        max_steps=100,
+        max_time_seconds=300,
+    )
+)
+```
+
+First limit hit stops execution.
+
+## Loop Detection
+
+Detect and stop agents stuck in loops.
+
+```python
+from splinter import LoopDetectionConfig
+
+gateway = Gateway(
+    loop_detection=LoopDetectionConfig(
+        max_repeated_outputs=3,   # Same output 3x = loop
+        max_no_state_change=5,    # No state change 5x = loop
+        max_ping_pong=4,          # A↔B↔A↔B = loop
+    )
+)
+```
+
+When detected, raises `LoopDetectedError`.
+
+### Types of Loops
+
+| Type | Detection |
+|------|-----------|
+| Repeated output | Same response N times |
+| No progress | State unchanged N times |
+| Ping-pong | Two agents alternating |
+
+## Tool Access Control
+
+Control which agents can use which tools.
+
+```python
+from splinter import ToolAccessController
+
+controller = ToolAccessController()
+
+# Only researcher can search
+controller.register_tool("web_search", allowed_agents=["researcher"])
+
+# Only admin can delete
+controller.register_tool("delete_*", allowed_agents=["admin"])
+
+gateway = Gateway(tool_access=controller)
+```
+
+When denied, raises `ToolAccessDeniedError`.
+
+### Wildcards
+
+```python
+# All admin tools
+controller.register_tool("admin_*", allowed_agents=["admin"])
+
+# Any agent can use
+controller.register_tool("read_file", allowed_agents=["*"])
+```
+
+## Memory Limits
+
+Bound agent memory usage.
+
+```python
+from splinter import MemoryStore, MemoryConfig
+
+memory = MemoryStore(config=MemoryConfig(
+    max_entries=1000,
+    max_size_bytes=10 * 1024 * 1024,  # 10MB
+    eviction_policy="lru",  # or "fifo", "ttl"
+    ttl_seconds=3600,  # 1 hour
+))
+```
+
+### Eviction Policies
+
+| Policy | Behavior |
+|--------|----------|
+| `fifo` | First in, first out |
+| `lru` | Least recently used |
+| `ttl` | Time-to-live based |
+
+## Checking Remaining
+
+```python
+remaining = gateway.get_metrics()["remaining"]
+# {
+#     "budget": 5.50,
+#     "steps": 50,
+#     "time_seconds": 150.0,
+# }
+```

@@ -1,0 +1,129 @@
+---
+title: Gateway
+description: The central orchestrator
+---
+
+## What is Gateway?
+
+Gateway is **the** central orchestrator. Every LLM call goes through it.
+
+```python
+from splinter import Gateway, ExecutionLimits
+
+gateway = Gateway(
+    limits=ExecutionLimits(max_budget=10.0, max_steps=100)
+)
+gateway.configure_provider("openai", api_key="sk-...")
+```
+
+## Configuration
+
+### Limits
+
+```python
+gateway = Gateway(
+    limits=ExecutionLimits(
+        max_budget=10.0,      # Stop at $10
+        max_steps=100,        # Stop at 100 LLM calls
+        max_time_seconds=300, # Stop at 5 minutes
+    )
+)
+```
+
+### Loop Detection
+
+```python
+from splinter import LoopDetectionConfig
+
+gateway = Gateway(
+    loop_detection=LoopDetectionConfig(
+        max_repeated_outputs=3,  # Stop if same output 3x
+        max_no_state_change=5,   # Stop if state unchanged 5x
+    )
+)
+```
+
+### Multiple Providers
+
+```python
+gateway.configure_provider("openai", api_key="sk-...")
+gateway.configure_provider("anthropic", api_key="sk-ant-...")
+gateway.configure_provider("gemini", api_key="...")
+```
+
+## Making Calls
+
+### Basic Call
+
+```python
+response = await gateway.call(
+    agent_id="researcher",
+    provider="openai",
+    model="gpt-4o-mini",
+    messages=[
+        LLMMessage(role="user", content="Hello")
+    ],
+)
+```
+
+### With Tools
+
+```python
+response = await gateway.call_with_tools(
+    agent_id="researcher",
+    provider="openai",
+    model="gpt-4o-mini",
+    messages=[...],
+    tools=[...],
+    tool_executor=my_tool_executor,
+)
+```
+
+## Observability
+
+### Get Metrics
+
+```python
+metrics = gateway.get_metrics()
+# {
+#     "total_cost": 0.05,
+#     "total_steps": 10,
+#     "total_tokens": 5000,
+#     "elapsed_seconds": 30.5,
+# }
+```
+
+### Get Call History
+
+```python
+history = gateway.get_call_history(agent_id="researcher", limit=10)
+for record in history:
+    print(f"{record.agent_id}: ${record.cost:.4f}")
+```
+
+## Hooks
+
+```python
+def log_before(agent_id, request):
+    print(f"[{agent_id}] Calling LLM...")
+
+def log_after(agent_id, response):
+    print(f"[{agent_id}] Got response, cost: ${response.cost:.4f}")
+
+gateway = Gateway(
+    on_before_call=log_before,
+    on_after_call=log_after,
+)
+```
+
+## Internal Structure
+
+```python
+class Gateway:
+    def __init__(self):
+        self._control = _ControlLayer(...)      # Limits, loops, tools
+        self._providers = {}                     # OpenAI, Anthropic, etc.
+        self._coordination = _CoordinationLayer(...) # Checkpoints
+```
+
+Gateway orchestrates these layers. You don't interact with them directly.

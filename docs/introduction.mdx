@@ -1,0 +1,88 @@
+---
+title: Introduction
+description: Multi-agent control and coordination platform
+---
+
+# Splinter
+
+**Stop agents from going rogue. Enforce limits. Coordinate state. Resume from failures.**
+
+```python
+from splinter import Splinter
+
+s = Splinter(openai_key="sk-...")
+result = await s.run("researcher", "Find info about AI")
+```
+
+That's it. All safety controls are built-in.
+
+## The Problem
+
+Agents without guardrails will:
+- Spend unlimited money on API calls
+- Loop forever on the same task
+- Overwrite each other's work
+- Crash with no way to resume
+
+## The Solution
+
+Splinter's **Gateway** intercepts every LLM call:
+
+```
+Agent → GATEWAY → Control ✓ → LLM → Coordination → Response
+```
+
+## Features
+
+<CardGroup cols={2}>
+  <Card title="Control Layer" icon="shield" href="/control/overview">
+    Budget, step, time, memory limits. Rate limiting, circuit breakers, loop detection.
+  </Card>
+  <Card title="Coordination Layer" icon="users" href="/coordination/overview">
+    Shared state, ownership, checkpointing, schema validation, goal tracking.
+  </Card>
+</CardGroup>
+
+### Control Layer (Safety)
+
+| Feature | Description |
+|---------|-------------|
+| [Budget Limits](/control/budget-limits) | Cap total spend |
+| [Step Limits](/control/step-limits) | Cap LLM calls |
+| [Time Limits](/control/time-limits) | Cap wall-clock time |
+| [Memory Limits](/control/memory-limits) | Cap memory with TTL/eviction |
+| [Loop Detection](/control/loop-detection) | Detect stuck agents |
+| [Tool Access](/control/tool-access) | Per-agent permissions |
+| [Rate Limiting](/control/rate-limiting) | Per-agent/tool limits |
+| [Circuit Breakers](/control/circuit-breakers) | Global safety triggers |
+| [Decision Enforcement](/control/decision-enforcement) | Lock decisions |
+| [Retry Strategy](/control/retry-strategy) | Basic or fail-closed |
+| [Custom Rules](/control/custom-rules) | BLOCK/WARN rules |
+| [Rollback](/control/rollback) | Restore to checkpoint |
+
+### Coordination Layer (Multi-Agent)
+
+| Feature | Description |
+|---------|-------------|
+| [Shared State](/coordination/shared-state) | Single source of truth |
+| [State Ownership](/coordination/state-ownership) | Who can write what |
+| [Checkpointing](/coordination/checkpointing) | Save/resume progress |
+| [Schema Validation](/coordination/schema-validation) | Validate outputs |
+| [Chain Awareness](/coordination/chain-awareness) | Agents know history |
+| [Goal Tracking](/coordination/goal-tracking) | Track progress |
+| [Action Eligibility](/coordination/action-eligibility) | Who can act when |
+| [Completion Signals](/coordination/completion-signals) | Explicit done signals |
+| [Wait Tracking](/coordination/wait-tracking) | Why is agent idle? |
+
+## Providers
+
+| Provider | Key | Default Model |
+|----------|-----|---------------|
+| OpenAI | `openai_key` | gpt-4o-mini |
+| Anthropic | `anthropic_key` | claude-sonnet-4-20250514 |
+| Gemini | `gemini_key` | gemini-1.5-flash |
+| Grok | `grok_key` | grok-3-mini-fast |
+
+<Card title="Get Started" icon="rocket" href="/quickstart">
+  Install and run your first agent in 2 minutes
+</Card>

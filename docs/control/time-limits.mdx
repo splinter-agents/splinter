@@ -1,0 +1,42 @@
+---
+title: Time Limits
+description: Cap wall-clock execution time
+---
+
+# Time Limits
+
+Stop workflows after N seconds.
+
+## Usage
+
+```python
+from splinter import Gateway, ExecutionLimits
+
+gateway = Gateway(limits=ExecutionLimits(
+    max_time_seconds=300,  # 5 minutes max
+))
+```
+
+## Error Handling
+
+```python
+from splinter.exceptions import TimeLimitExceededError
+
+try:
+    result = await workflow.run()
+except TimeLimitExceededError as e:
+    print(f"Time limit exceeded: {e.elapsed:.2f}s >= {e.limit:.2f}s")
+```
+
+## Metrics
+
+```python
+metrics = gateway.get_metrics()
+print(f"Elapsed: {metrics['elapsed_seconds']:.2f}s")
+```
+
+## Use Cases
+
+- **SLA compliance**: Ensure workflows complete in time
+- **Resource management**: Free up resources after timeout
+- **User experience**: Don't leave users waiting forever

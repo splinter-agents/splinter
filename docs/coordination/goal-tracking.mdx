@@ -1,0 +1,89 @@
+---
+title: Goal Tracking
+description: Track progress toward workflow goals
+---
+
+# Goal Tracking
+
+Define goals with success criteria. Track progress.
+
+## Usage
+
+```python
+from splinter.coordination import GoalTracker, Goal
+
+tracker = GoalTracker()
+
+# Set a goal
+tracker.set_goal(Goal(
+    goal_id="main",
+    description="Write a blog post about AI",
+    success_criteria=[
+        "Research completed",
+        "Outline created",
+        "Draft written",
+        "Review completed",
+    ],
+    assigned_agents=["researcher", "writer", "reviewer"],
+))
+```
+
+## Update Progress
+
+```python
+# Mark criteria as met
+tracker.mark_criterion_met("main", "Research completed")
+tracker.mark_criterion_met("main", "Outline created")
+
+# Or set progress directly (0.0 to 1.0)
+tracker.update_progress("main", 0.5)
+```
+
+## Check Status
+
+```python
+# Is goal achieved?
+if tracker.is_achieved("main"):
+    print("Goal complete!")
+
+# Get progress
+progress = tracker.get_progress("main")
+print(f"Progress: {progress:.0%}")
+
+# Get unmet criteria
+unmet = tracker.get_unmet_criteria("main")
+print(f"Still need: {unmet}")
+```
+
+## Goal Properties
+
+```python
+goal = tracker.get_goal("main")
+
+print(goal.goal_id)           # "main"
+print(goal.description)       # "Write a blog post..."
+print(goal.success_criteria)  # ["Research completed", ...]
+print(goal.assigned_agents)   # ["researcher", "writer", "reviewer"]
+print(goal.achieved)          # True/False
+print(goal.progress)          # 0.0 to 1.0
+```
+
+## Callbacks
+
+```python
+def on_goal_achieved(goal):
+    print(f"Goal '{goal.goal_id}' achieved!")
+
+tracker = GoalTracker(on_goal_achieved=on_goal_achieved)
+```
+
+## Multiple Goals
+
+```python
+tracker.set_goal(Goal(goal_id="research", ...))
+tracker.set_goal(Goal(goal_id="writing", ...))
+tracker.set_goal(Goal(goal_id="review", ...))
+
+# Get all goals
+all_goals = tracker.get_all_goals()
+```
