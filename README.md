@@ -20,7 +20,7 @@ No Docker. No config files. Just pip install and go.
 
 ## 📋 Quick Reference
 
-> All the objects you'll use, organized by layer.
+> All objects, organized by layer. Local = free, Cloud = paid.
 
 ### Core
 
@@ -31,7 +31,7 @@ No Docker. No config files. Just pip install and go.
 | `Agent` | Single AI entity with config |
 | `AgentConfig` | Configuration for an agent |
 
-### 🛡️ Control Layer
+### 🛡️ Control Layer (Local)
 
 | Object | What it does |
 |--------|--------------|
@@ -46,7 +46,7 @@ No Docker. No config files. Just pip install and go.
 | `RulesEngine` | Custom BLOCK/WARN/LOG rules |
 | `MemoryStore` | Capped memory with auto-eviction |
 
-### 🤝 Coordination Layer
+### 🤝 Coordination Layer (Local)
 
 | Object | What it does |
 |--------|--------------|
@@ -61,6 +61,22 @@ No Docker. No config files. Just pip install and go.
 | `CompletionTracker` | Agents must say "I'm done" |
 | `WaitTracker` | Track why agents are idle |
 
+### ☁️ Splinter Cloud (Paid)
+
+| Feature | What it does |
+|---------|--------------|
+| **Live Control** | Pause, resume, stop agents remotely |
+| **Global Stop** | Emergency stop all agents instantly |
+| **Live Rules** | Change rules without redeploying |
+| **Live Limits** | Modify budgets/rate limits on the fly |
+| **Tool Access** | Update permissions in real-time |
+| **Break Loops** | Force-break detected loops |
+| **Rollback** | Resume from safe checkpoint |
+| **Dashboard** | Live view of all agents, state, handoffs |
+| **Status View** | See active, waiting, blocked, eligible agents |
+| **Deadlock Detection** | Automatically surface coordination stalls |
+| **Bottleneck Analysis** | Find why agents are waiting |
+
 ---
 
 ## What is Splinter?
@@ -73,7 +89,7 @@ No Docker. No config files. Just pip install and go.
                   │
                   ▼
 ┌─────────────────────────────────────────┐
-│              SPLINTER                   │
+│         SPLINTER (Local - Free)         │
 │                                         │
 │  🛡️ CONTROL         🤝 COORDINATION     │
 │  ───────────       ───────────────      │
@@ -85,13 +101,20 @@ No Docker. No config files. Just pip install and go.
 │                                         │
 └─────────────────────┬───────────────────┘
                       │
-                      ▼
-        OpenAI / Anthropic / Gemini / Grok
+          ┌───────────┴───────────┐
+          ▼                       ▼
+   OpenAI / Claude         ☁️ Splinter Cloud
+   Gemini / Grok              (Paid API Key)
+                              │
+                              ├── Live Dashboard
+                              ├── Remote Control
+                              ├── Deadlock Detection
+                              └── Bottleneck Analysis
 ```
 
-**Control** = Safety. Stop before spending too much, looping forever, or breaking things.
+**Local (Free)** = Control + Coordination. Runs entirely on your machine.
 
-**Coordination** = Collaboration. Share state, track progress, validate handoffs.
+**Cloud (Paid)** = Live observability + remote control. Add API key to enable.
 
 ---
 
@@ -139,6 +162,56 @@ print(f"Cost: ${s.cost:.4f} | Steps: {s.steps}")
 ```
 
 Done. Your agent is protected.
+
+---
+
+## ☁️ Splinter Cloud (Paid)
+
+Add an API key to unlock live control and observability.
+
+**Connect:**
+
+```python
+from splinter import Splinter
+
+# Option 1: Pass API key directly
+s = Splinter(
+    openai_key="sk-...",
+    api_key="sk-splinter-...",  # Cloud API key
+)
+
+# Option 2: Connect later
+s = Splinter(openai_key="sk-...")
+await s.connect_cloud(api_key="sk-splinter-...")
+
+# Option 3: Environment variable
+# export SPLINTER_API_KEY="sk-splinter-..."
+s = Splinter(openai_key="sk-...")  # Auto-connects
+```
+
+**What you get:**
+
+| Feature | Description |
+|---------|-------------|
+| **Live Dashboard** | See all agents, shared state, ownership, checkpoints, handoffs in real-time |
+| **Pause/Resume** | Pause any agent, resume when ready |
+| **Stop Immediately** | Stop agents without redeploying |
+| **Global Stop** | Emergency stop all agents at once |
+| **Change Rules Live** | Update rules without restart |
+| **Change Limits Live** | Modify budgets, rate limits on the fly |
+| **Update Tool Access** | Change permissions in real-time |
+| **Break Loops** | Force-break detected loops |
+| **Rollback** | Resume from any checkpoint |
+| **Status View** | See which agents are active, waiting, blocked, or eligible |
+| **Deadlock Detection** | Automatically surface coordination stalls |
+| **Bottleneck Analysis** | Understand why agents are waiting |
+
+**Check connection:**
+
+```python
+if s.is_cloud_connected:
+    print("Connected to Splinter Cloud")
+```
 
 ---
 

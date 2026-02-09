@@ -183,7 +183,7 @@ def test_coordination_layer():
 
     # Test CheckpointManager
     print("\n4. Testing CheckpointManager...")
-    from splinter.types import AgentStatus, ExecutionMetrics
+    from splinter.schemas import AgentStatus, ExecutionMetrics
 
     checkpoint_mgr = CheckpointManager()
 

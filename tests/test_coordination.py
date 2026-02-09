@@ -13,7 +13,7 @@ from splinter.coordination.checkpoint import (
     InMemoryCheckpointStorage,
     FileCheckpointStorage,
 )
-from splinter.types import AgentStatus, ExecutionMetrics
+from splinter.schemas import AgentStatus, ExecutionMetrics
 from splinter.exceptions import StateOwnershipError, SchemaValidationError, CheckpointNotFoundError
 
 

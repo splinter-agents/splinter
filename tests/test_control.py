@@ -7,7 +7,7 @@ from splinter.control.limits import LimitsEnforcer, PerAgentLimits
 from splinter.control.loop_detection import LoopDetector
 from splinter.control.tool_access import ToolAccessController
 from splinter.control.memory import MemoryStore, AgentMemory
-from splinter.types import ExecutionLimits, LoopDetectionConfig, MemoryConfig, EvictionPolicy
+from splinter.schemas import ExecutionLimits, LoopDetectionConfig, MemoryConfig, EvictionPolicy
 from splinter.exceptions import (
     BudgetExceededError,
     StepLimitExceededError,

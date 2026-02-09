@@ -1,18 +1,18 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "splinter"
 version = "0.1.0"
-description = "Control and coordination layer for multi-agent systems"
+description = "Control and coordination infrastructure for AI agents"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
-    {name = "Splinter Contributors"}
+    {name = "Sadashiva Yalla"}
 ]
-keywords = ["agents", "llm", "multi-agent", "orchestration", "control"]
+keywords = ["agents", "llm", "multi-agent", "orchestration", "control", "coordination"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -50,10 +50,13 @@ dev = [
 Homepage = "https://github.com/splinter-agents/splinter"
 Documentation = "https://github.com/splinter-agents/splinter#readme"
 Repository = "https://github.com/splinter-agents/splinter"
+Issues = "https://github.com/splinter-agents/splinter/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["splinter*"]
+where = ["src"]
 
 [tool.ruff]
 target-version = "py310"
