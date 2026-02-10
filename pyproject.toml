@@ -3,16 +3,26 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "splinter"
+name = "splinter-agent"
 version = "0.1.0"
 description = "Control and coordination infrastructure for AI agents"
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
 requires-python = ">=3.10"
+
 authors = [
-    {name = "Sadashiva Yalla"}
+    { name = "Sadashiva Yalla" }
 ]
-keywords = ["agents", "llm", "multi-agent", "orchestration", "control", "coordination"]
+
+keywords = [
+    "agents",
+    "llm",
+    "multi-agent",
+    "orchestration",
+    "control",
+    "coordination"
+]
+
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -34,11 +44,13 @@ dependencies = [
 openai = ["openai>=1.0.0"]
 anthropic = ["anthropic>=0.18.0"]
 google = ["google-generativeai>=0.3.0"]
+
 all = [
     "openai>=1.0.0",
     "anthropic>=0.18.0",
     "google-generativeai>=0.3.0",
 ]
+
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
@@ -47,13 +59,13 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/splinter-agents/splinter"
-Documentation = "https://github.com/splinter-agents/splinter#readme"
+Homepage = "https://splinter.mintlify.app/"
+Documentation = "https://splinter.mintlify.app/"
 Repository = "https://github.com/splinter-agents/splinter"
 Issues = "https://github.com/splinter-agents/splinter/issues"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
