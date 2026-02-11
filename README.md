@@ -3,7 +3,7 @@
 **Control and coordination infrastructure for multi-agent AI systems.**
 
 ```bash
-pip install splinter
+pip install splinter-agent
 ```
 
 ```python
@@ -121,7 +121,7 @@ No Docker. No config files. Just pip install and go.
 ## 📦 Installation
 
 ```bash
-pip install splinter
+pip install splinter-agent
 ```
 
 Then install your LLM provider:
